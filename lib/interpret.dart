@@ -75,25 +75,6 @@ Value valueNotEquals(Value x, Value y) =>
         : operatorTypeError([x, y], '=');
 
 final Map<String, dynamic> builtInBinaryOperatorMethods = {
-  /* '+': (VNum x, VNum y) => x + y,
-  // '-': (VNum x, VNum y) => x - y,
-  // '*': (VNum x, VNum y) => x * y,
-  // '/': (VNum x, VNum y) => x / y,
-  // '~/': (VNum x, VNum y) => x ~/ y,
-  // '%': (VNum x, VNum y) => x % y,
-  // '&': (VNum x, VNum y) => x & y,
-  // '|': (VNum x, VNum y) => x | y,
-  // '^': (VNum x, VNum y) => x ^ y,
-  // '<<': (VNum x, VNum y) => x << y,
-  // '>>': (VNum x, VNum y) => x >> y,
-  // '=': (Value x, Value y) => valueEquals(x, y),
-  // '!=': (Value x, Value y) => valueNotEquals(x, y),
-  // '>': (VNum x, VNum y) => x.greaterThan(y),
-  // '<': (VNum x, VNum y) => x.lowerThan(y),
-  // '>=': (VNum x, VNum y) => x.greaterEqualThan(y),
-  // '<=': (VNum x, VNum y) => x.lowerEqualThan(y),
-  // '&&': (VBool x, VBool y) => VBool(x.value && y.value),
-  // '||': (VBool x, VBool y) => VBool(x.value || y.value),*/
   '+': (x, y) =>
       x is VNum && y is VNum ? x + y : operatorTypeError([x, y], '+'),
   '-': (x, y) =>
@@ -149,10 +130,18 @@ VError operatorTypeError(List<Value> invalidValues, String op,
       type: 'TypeError');
 }
 
+SExpr multipleArgLambda(List<SBind> argList, SExprBase bindedExpr) {
+  return argList.reversed
+      .fold(bindedExpr, (expr, arg) => SExpr([SBind('\\'), arg, expr]));
+}
+
 Value interpret(SExprBase expr, Env env) {
+  // SInt
   if (expr is SNum) {
     return VNum(expr.value);
-  } else if (expr is SBind) {
+  }
+  // SBind
+  else if (expr is SBind) {
     final bind = expr;
     final realBind = env.lookUp(bind.name);
     if (realBind == null) {
@@ -163,24 +152,35 @@ Value interpret(SExprBase expr, Env env) {
     } else {
       return realBind.value;
     }
-  } else {
+  }
+  // (......)
+  else {
     final sExpr = expr as SExpr;
+    // ()
     if (sExpr.length == 0) {
       return VError(
           message: 'Syntax error',
           source: expr.toString(),
           type: 'SyntaxError');
-    } else if (sExpr.length == 1) {
+    }
+    // (x)
+    else if (sExpr.length == 1) {
       return interpret(sExpr.elements[0], env);
-    } else {
+    }
+    // (x ......)
+    else {
       final first = sExpr.elements[0];
+      // (SNum ......)
       if (first is SNum) {
         return VError(
             message: 'Calling on uncallable object $first',
             source: expr.toString(),
             type: 'TypeError');
-      } else if (first is SBind) {
+      }
+      // (SBind ......)
+      else if (first is SBind) {
         final sBind = first;
+        // (let ......)
         if (sBind.name == 'let') {
           if (sExpr.length != 4) {
             return VError(
@@ -189,6 +189,7 @@ Value interpret(SExprBase expr, Env env) {
                 source: expr.toString(),
                 type: 'SyntaxError');
           } else {
+            // (let <bindName> <bindValueExpr> <bindedExpr>)
             final second = sExpr.elements[1];
             if (second is! SBind) {
               return VError(
@@ -206,7 +207,8 @@ Value interpret(SExprBase expr, Env env) {
                   env.extended((second as SBind).name, bindValue));
             }
           }
-        } // (let ... ... ...)
+        } // (let ......)
+        // (\ ......) or (lambda ......)
         else if (sBind.name == '\\' || sBind.name == 'lambda') {
           if (sExpr.length != 3) {
             return VError(
@@ -216,19 +218,77 @@ Value interpret(SExprBase expr, Env env) {
                 type: 'SyntaxError');
           } else {
             final second = sExpr.elements[1];
-            if (second is! SBind) {
+            if (second is SBind) {
+              // (\ <bindName> <bindedExpr>)
+              final closure = Closure(second.name, sExpr.elements[2], env);
+              return VClos(closure);
+            } else if (second is SExpr) {
+              if (second.length == 0) {
+                // (\ () <bindedExpr>)
+                // equals to the binded expression itself
+                return interpret(sExpr.elements[2], env);
+              }
+              // (\ (<arg0> ...) <bindedExpr>)
+              final argList = second.elements;
+              if (argList.any((arg) => arg is! SBind)) {
+                return VError(
+                    message:
+                        'Expected binding names at the second item of lambda expression',
+                    source: expr.toString(),
+                    type: 'SyntaxError');
+              }
+              return interpret(
+                  multipleArgLambda(argList.cast<SBind>(), sExpr.elements[2]), env);
+            } else {
               return VError(
                   message:
-                      'Expected a bind name at the second item of lambda expression',
+                      'Expected a bind name or an argument list at the second item of lambda expression',
                   source: expr.toString(),
                   type: 'TypeError');
-            } else {
-              final closure =
-                  Closure((second as SBind).name, sExpr.elements[2], env);
-              return VClos(closure);
             }
           }
-        } // (\ ... ...)
+        } // (\ ......)
+        // (def ......)
+        else if (sBind.name == 'def') {
+          if (sExpr.length != 3) {
+            return VError(
+                message:
+                    'Syntax error in function definition (expected 3 items, got ${sExpr.length})',
+                source: expr.toString(),
+                type: 'SyntaxError');
+          } else {
+            // (def (<functionName> <argList>) <bindedExpr>)
+            final second = sExpr.elements[1];
+            if (second is SExpr) {
+              final funDef = second.elements;
+              final argList = funDef.sublist(1);
+              if (funDef.any((arg) => arg is! SBind)) {
+                return VError(
+                    message:
+                        'Expected binding names at the second item of function definition',
+                    source: expr.toString(),
+                    type: 'SyntaxError');
+              }
+              final closure =
+                  interpret(multipleArgLambda(argList.cast<SBind>(), sExpr.elements[2]), env);
+              (closure as VClos).value.env.binds
+                  .add(Binding((funDef.first as SBind).name, closure));
+              // FIXME: ATTENTION!
+              assert(closure != (closure as VClos).value.env.binds.first.value);
+              return closure;
+              // final namedClosure = NamedClosure(
+              //     (funDef.first as SBind).name, (closure as VClos).value);
+              // return VFunc(namedClosure);
+            } else {
+              return VError(
+                  message:
+                      'Expected a function declaration at the second item of function definition',
+                  source: expr.toString(),
+                  type: 'SyntaxError');
+            }
+          }
+        } // (def ......)
+        // (if ......)
         else if (sBind.name == 'if') {
           if (sExpr.length != 4) {
             return VError(
@@ -255,7 +315,8 @@ Value interpret(SExprBase expr, Env env) {
               }
             }
           }
-        } // (if ... ... ...)
+        } // (if ......)
+        // (op ......)
         else if (isOperator(sBind.name)) {
           if (builtInBinaryOperatorMethods.containsKey(sBind.name)) {
             if (sExpr.length == 3) {
@@ -292,7 +353,7 @@ Value interpret(SExprBase expr, Env env) {
           } else {
             // not possible
           }
-        } // (op ...)
+        } // (op ......)
         else if (sExpr.length == 2) {
         } else {
           final foldedExpr = sExpr.elements

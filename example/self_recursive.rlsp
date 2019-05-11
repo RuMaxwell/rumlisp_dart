@@ -1,0 +1,9 @@
+(let fact (def (fact x)
+  (if (= x 0) 1
+    (* x (fact (- x 1)))))
+(let collaz (def (collaz x)
+  (if (= x 1) #t
+      (if (= (% x 2) 1)
+          (collaz (~/ (+ 1 (* x 3)) 2))
+          (collaz (~/ x 2)))))
+  (collaz 5)))

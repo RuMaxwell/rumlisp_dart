@@ -7,7 +7,27 @@ class Closure {
 
   @override
   String toString() {
-    return '(\\ ${this.bindName} . ${this.bindExpr}) where ${this.env}';
+    final test = (Binding bind) =>
+        bind.value is VClos && (bind.value as VClos).value == this;
+    if (env.binds.any(test)) {
+      final _this = env.binds.where(test);
+      final _env =
+          Env(env.binds.where((b) => !test(b)).toList()).extended(_this.first.name, VString('<NamedThis>'));
+      return Closure(bindName, bindExpr, _env).toString();
+    }
+    return '(\\ ${bindName} . ${bindExpr}) where ${env}';
+  }
+}
+
+class NamedClosure {
+  final String name;
+  final Closure closure;
+
+  const NamedClosure(this.name, this.closure);
+
+  @override
+  String toString() {
+    return '<$name: $closure>';
   }
 }
 
@@ -35,12 +55,15 @@ class Env {
 
     var i = 0;
     Binding bind;
-    for (; i < s.length - 1; i++) {
+    for (; i < binds.length; i++) {
       bind = binds[i];
-      s += bind.shouldShow ? '${binds[i].toString()}, ' : '';
+      if (bind.shouldShow) break;
     }
-    bind = binds[i];
     s += bind.shouldShow ? bind.toString() : '';
+    for (i++; i < binds.length; i++) {
+      bind = binds[i];
+      s += bind.shouldShow ? ', ${binds[i].toString()}' : '';
+    }
 
     return s;
   }
@@ -59,7 +82,6 @@ class Env {
   }
 }
 
-
 abstract class Value {
   const Value();
 }
@@ -69,25 +91,26 @@ class VNum extends Value {
 
   const VNum(this.value);
 
-  VNum operator+(VNum x) => VNum(value + x.value);
-  VNum operator-(VNum x) => VNum(value - x.value);
-  VNum operator*(VNum x) => VNum(value * x.value);
-  VNum operator/(VNum x) => VNum(value / x.value);
-  VNum operator~/(VNum x) => VNum(value ~/ x.value);
-  VNum operator%(VNum x) => VNum(value % x.value);
-  VNum operator&(VNum x) => VNum(value.toInt() & x.value.toInt());
-  VNum operator|(VNum x) => VNum(value.toInt() | x.value.toInt());
-  VNum operator^(VNum x) => VNum(value.toInt() ^ x.value.toInt());
-  VNum operator<<(VNum x) => VNum(value.toInt() << x.value.toInt());
-  VNum operator>>(VNum x) => VNum(value.toInt() >> x.value.toInt());
-  VNum operator~() => VNum(~value.toInt());
-  bool operator==(x) {
+  VNum operator +(VNum x) => VNum(value + x.value);
+  VNum operator -(VNum x) => VNum(value - x.value);
+  VNum operator *(VNum x) => VNum(value * x.value);
+  VNum operator /(VNum x) => VNum(value / x.value);
+  VNum operator ~/(VNum x) => VNum(value ~/ x.value);
+  VNum operator %(VNum x) => VNum(value % x.value);
+  VNum operator &(VNum x) => VNum(value.toInt() & x.value.toInt());
+  VNum operator |(VNum x) => VNum(value.toInt() | x.value.toInt());
+  VNum operator ^(VNum x) => VNum(value.toInt() ^ x.value.toInt());
+  VNum operator <<(VNum x) => VNum(value.toInt() << x.value.toInt());
+  VNum operator >>(VNum x) => VNum(value.toInt() >> x.value.toInt());
+  VNum operator ~() => VNum(~value.toInt());
+  bool operator ==(x) {
     if (x is! VNum) {
       return false;
     } else {
       return value == (x as VNum).value;
     }
   }
+
   VBool greaterThan(VNum x) => VBool(value > x.value);
   VBool greaterEqualThan(VNum x) => VBool(value >= x.value);
   VBool lowerThan(VNum x) => VBool(value < x.value);
@@ -104,8 +127,8 @@ class VBool extends Value {
 
   const VBool(this.value);
 
-  bool operator==(x) {
-    if (x == null || x is! VBool) {
+  bool operator ==(x) {
+    if (x is! VBool) {
       return false;
     } else {
       return value == (x as VBool).value;
@@ -118,10 +141,40 @@ class VBool extends Value {
   }
 }
 
+class VString extends Value {
+  final String value;
+
+  const VString(this.value);
+
+  bool operator ==(x) {
+    if (x is! VString) {
+      return false;
+    } else {
+      return value == (x as VString).value;
+    }
+  }
+
+  @override
+  String toString() {
+    return value;
+  }
+}
+
 class VClos extends Value {
   final Closure value;
 
   const VClos(this.value);
+
+  @override
+  String toString() {
+    return value.toString();
+  }
+}
+
+class VFunc extends Value {
+  final NamedClosure value;
+
+  const VFunc(this.value);
 
   @override
   String toString() {
@@ -141,7 +194,6 @@ class VError extends Value {
     return '${type.isEmpty ? 'Error' : type}: $message at $source';
   }
 }
-
 
 abstract class SExprBase {
   const SExprBase();
