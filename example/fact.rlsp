@@ -1,0 +1,10 @@
+(let y
+  (\ gen
+    ((\ g (g g)) (\ f (\ args ((gen (f f)) args)))))
+(let G (\ fac
+  (\ n
+    (if (< n 1) 1
+        (* n (fac (- n 1))))))
+(let fact
+  (y G)
+(fact 5))))
