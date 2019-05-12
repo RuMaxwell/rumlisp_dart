@@ -1,0 +1,9 @@
+; Define a constant name ;
+(def DEFAULT_LEN 100)
+(def DEFAULT_AREA (* DEFAULT_LEN DEFAULT_LEN))
+(DEFAULT_AREA)          ; 10000 ;
+
+; Define a constant function (equals to a constant name) ;
+(def (width) 6)
+(def (rectArea height) (* width height))
+(rectArea width)        ; 36 ;

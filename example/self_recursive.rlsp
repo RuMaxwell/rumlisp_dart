@@ -1,3 +1,4 @@
+; Some self-recursive functions ;
 (let fact (def (fact x)
   (if (= x 0) 1
     (* x (fact (- x 1)))))

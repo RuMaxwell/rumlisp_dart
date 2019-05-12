@@ -60,62 +60,128 @@ List<Binding> builtInBinds() {
 final defaultEnv = Env(builtInBinds());
 
 final builtInUnaryOperatorMethods = {
-  '!': (x) => x is VBool ? VBool(!x.value) : operatorTypeError([x], '!'),
-  '~': (x) => x is VNum ? ~x : operatorTypeError([x], '~'),
+  '!': (x) => x is VError
+      ? x
+      : x is VBool ? VBool(!x.value) : operatorTypeError([x], '!'),
+  '~': (x) => x is VError ? x : x is VNum ? ~x : operatorTypeError([x], '~'),
 };
 
-Value valueEquals(Value x, Value y) =>
-    ((x is VNum && y is VNum) || (x is VBool && y is VBool))
-        ? VBool(x == y)
-        : operatorTypeError([x, y], '=');
+Value valueEquals(Value x, Value y) => x is VError
+    ? x
+    : y is VError
+        ? y
+        : ((x is VNum && y is VNum) || (x is VBool && y is VBool))
+            ? VBool(x == y)
+            : operatorTypeError([x, y], '=');
 
-Value valueNotEquals(Value x, Value y) =>
-    ((x is VNum && y is VNum) || (x is VBool && y is VBool))
-        ? VBool(x != y)
-        : operatorTypeError([x, y], '=');
+Value valueNotEquals(Value x, Value y) => x is VError
+    ? x
+    : y is VError
+        ? y
+        : ((x is VNum && y is VNum) || (x is VBool && y is VBool))
+            ? VBool(x != y)
+            : operatorTypeError([x, y], '=');
 
 final Map<String, dynamic> builtInBinaryOperatorMethods = {
-  '+': (x, y) =>
-      x is VNum && y is VNum ? x + y : operatorTypeError([x, y], '+'),
-  '-': (x, y) =>
-      x is VNum && y is VNum ? x - y : operatorTypeError([x, y], '-'),
-  '*': (x, y) =>
-      x is VNum && y is VNum ? x * y : operatorTypeError([x, y], '*'),
-  '/': (x, y) =>
-      x is VNum && y is VNum ? x / y : operatorTypeError([x, y], '/'),
-  '~/': (x, y) =>
-      x is VNum && y is VNum ? x ~/ y : operatorTypeError([x, y], '~/'),
-  '%': (x, y) =>
-      x is VNum && y is VNum ? x % y : operatorTypeError([x, y], '%'),
-  '&': (x, y) =>
-      x is VNum && y is VNum ? x & y : operatorTypeError([x, y], '&'),
-  '|': (x, y) =>
-      x is VNum && y is VNum ? x | y : operatorTypeError([x, y], '|'),
-  '^': (x, y) =>
-      x is VNum && y is VNum ? x ^ y : operatorTypeError([x, y], '^'),
-  '<<': (x, y) =>
-      x is VNum && y is VNum ? x << y : operatorTypeError([x, y], '<<'),
-  '>>': (x, y) =>
-      x is VNum && y is VNum ? x >> y : operatorTypeError([x, y], '>>'),
+  '+': (x, y) => x is VError
+      ? x
+      : y is VError
+          ? y
+          : x is VNum && y is VNum ? x + y : operatorTypeError([x, y], '+'),
+  '-': (x, y) => x is VError
+      ? x
+      : y is VError
+          ? y
+          : x is VNum && y is VNum ? x - y : operatorTypeError([x, y], '-'),
+  '*': (x, y) => x is VError
+      ? x
+      : y is VError
+          ? y
+          : x is VNum && y is VNum ? x * y : operatorTypeError([x, y], '*'),
+  '/': (x, y) => x is VError
+      ? x
+      : y is VError
+          ? y
+          : x is VNum && y is VNum ? x / y : operatorTypeError([x, y], '/'),
+  '~/': (x, y) => x is VError
+      ? x
+      : y is VError
+          ? y
+          : x is VNum && y is VNum ? x ~/ y : operatorTypeError([x, y], '~/'),
+  '%': (x, y) => x is VError
+      ? x
+      : y is VError
+          ? y
+          : x is VNum && y is VNum ? x % y : operatorTypeError([x, y], '%'),
+  '&': (x, y) => x is VError
+      ? x
+      : y is VError
+          ? y
+          : x is VNum && y is VNum ? x & y : operatorTypeError([x, y], '&'),
+  '|': (x, y) => x is VError
+      ? x
+      : y is VError
+          ? y
+          : x is VNum && y is VNum ? x | y : operatorTypeError([x, y], '|'),
+  '^': (x, y) => x is VError
+      ? x
+      : y is VError
+          ? y
+          : x is VNum && y is VNum ? x ^ y : operatorTypeError([x, y], '^'),
+  '<<': (x, y) => x is VError
+      ? x
+      : y is VError
+          ? y
+          : x is VNum && y is VNum ? x << y : operatorTypeError([x, y], '<<'),
+  '>>': (x, y) => x is VError
+      ? x
+      : y is VError
+          ? y
+          : x is VNum && y is VNum ? x >> y : operatorTypeError([x, y], '>>'),
   '=': (x, y) => valueEquals(x, y),
   '!=': (x, y) => valueNotEquals(x, y),
-  '>': (x, y) => x is VNum && y is VNum
-      ? x.greaterThan(y)
-      : operatorTypeError([x, y], '>'),
-  '<': (x, y) =>
-      x is VNum && y is VNum ? x.lowerThan(y) : operatorTypeError([x, y], '<'),
-  '>=': (x, y) => x is VNum && y is VNum
-      ? x.greaterEqualThan(y)
-      : operatorTypeError([x, y], '>='),
-  '<=': (x, y) => x is VNum && y is VNum
-      ? x.lowerEqualThan(y)
-      : operatorTypeError([x, y], '<='),
-  '&&': (x, y) => x is VBool && y is VBool
-      ? VBool(x.value && y.value)
-      : operatorTypeError([x, y], '&&'),
-  '||': (x, y) => x is VBool && y is VBool
-      ? VBool(x.value || y.value)
-      : operatorTypeError([x, y], '||'),
+  '>': (x, y) => x is VError
+      ? x
+      : y is VError
+          ? y
+          : x is VNum && y is VNum
+              ? x.greaterThan(y)
+              : operatorTypeError([x, y], '>'),
+  '<': (x, y) => x is VError
+      ? x
+      : y is VError
+          ? y
+          : x is VNum && y is VNum
+              ? x.lowerThan(y)
+              : operatorTypeError([x, y], '<'),
+  '>=': (x, y) => x is VError
+      ? x
+      : y is VError
+          ? y
+          : x is VNum && y is VNum
+              ? x.greaterEqualThan(y)
+              : operatorTypeError([x, y], '>='),
+  '<=': (x, y) => x is VError
+      ? x
+      : y is VError
+          ? y
+          : x is VNum && y is VNum
+              ? x.lowerEqualThan(y)
+              : operatorTypeError([x, y], '<='),
+  '&&': (x, y) => x is VError
+      ? x
+      : y is VError
+          ? y
+          : x is VBool && y is VBool
+              ? VBool(x.value && y.value)
+              : operatorTypeError([x, y], '&&'),
+  '||': (x, y) => x is VError
+      ? x
+      : y is VError
+          ? y
+          : x is VBool && y is VBool
+              ? VBool(x.value || y.value)
+              : operatorTypeError([x, y], '||'),
 };
 bool isOperator(String op) {
   return builtInUnaryOperatorMethods.containsKey(op) ||
@@ -130,9 +196,9 @@ VError operatorTypeError(List<Value> invalidValues, String op,
       type: 'TypeError');
 }
 
-SExpr multipleArgLambda(List<SBind> argList, SExprBase bindedExpr) {
+SExprBase multipleArgLambda(List<SBind> argList, SExprBase boundExpr) {
   return argList.reversed
-      .fold(bindedExpr, (expr, arg) => SExpr([SBind('\\'), arg, expr]));
+      .fold(boundExpr, (expr, arg) => SExpr([SBind('\\'), arg, expr]));
 }
 
 Value interpret(SExprBase expr, Env env) {
@@ -143,14 +209,16 @@ Value interpret(SExprBase expr, Env env) {
   // SBind
   else if (expr is SBind) {
     final bind = expr;
-    final realBind = env.lookUp(bind.name);
-    if (realBind == null) {
+    dynamic thing = env.lookUp(bind.name)?.value;
+    thing = thing ?? Global.lookUpFunction(bind.name);
+    thing = thing ?? Global.lookUpBinding(bind.name)?.value;
+    if (thing == null) {
       return VError(
           message: 'Can not find binding `${bind.name}\'',
           source: expr.toString(),
           type: 'NameError');
     } else {
-      return realBind.value;
+      return thing;
     }
   }
   // (......)
@@ -189,7 +257,7 @@ Value interpret(SExprBase expr, Env env) {
                 source: expr.toString(),
                 type: 'SyntaxError');
           } else {
-            // (let <bindName> <bindValueExpr> <bindedExpr>)
+            // (let <bindName> <bindValueExpr> <boundExpr>)
             final second = sExpr.elements[1];
             if (second is! SBind) {
               return VError(
@@ -219,16 +287,16 @@ Value interpret(SExprBase expr, Env env) {
           } else {
             final second = sExpr.elements[1];
             if (second is SBind) {
-              // (\ <bindName> <bindedExpr>)
+              // (\ <bindName> <boundExpr>)
               final closure = Closure(second.name, sExpr.elements[2], env);
               return VClos(closure);
             } else if (second is SExpr) {
               if (second.length == 0) {
-                // (\ () <bindedExpr>)
-                // equals to the binded expression itself
+                // (\ () <boundExpr>)
+                // equals to the bound expression itself
                 return interpret(sExpr.elements[2], env);
               }
-              // (\ (<arg0> ...) <bindedExpr>)
+              // (\ (<arg0> ...) <boundExpr>)
               final argList = second.elements;
               if (argList.any((arg) => arg is! SBind)) {
                 return VError(
@@ -238,7 +306,8 @@ Value interpret(SExprBase expr, Env env) {
                     type: 'SyntaxError');
               }
               return interpret(
-                  multipleArgLambda(argList.cast<SBind>(), sExpr.elements[2]), env);
+                  multipleArgLambda(argList.cast<SBind>(), sExpr.elements[2]),
+                  env);
             } else {
               return VError(
                   message:
@@ -257,11 +326,36 @@ Value interpret(SExprBase expr, Env env) {
                 source: expr.toString(),
                 type: 'SyntaxError');
           } else {
-            // (def (<functionName> <argList>) <bindedExpr>)
+            // (def (<functionName> <argList>) <boundExpr>)
             final second = sExpr.elements[1];
+            if (second is SBind) {
+              final funName = second.name;
+              if (Global.lookUpFunction(funName) != null) {
+                return VError(
+                    message: 'Already defined global name $funName',
+                    source: expr.toString(),
+                    type: 'NameError');
+              }
+              final bodyValue = interpret(sExpr.elements[2], env);
+              Global.bindings.insert(0, Binding(funName, bodyValue));
+              return VFunc(null, null);
+            }
             if (second is SExpr) {
               final funDef = second.elements;
+              final funName = (funDef.first as SBind).name;
+              if (Global.lookUpFunction(funName) != null) {
+                return VError(
+                    message: 'Already defined global name $funName',
+                    source: expr.toString(),
+                    type: 'NameError');
+              }
+
               final argList = funDef.sublist(1);
+              if (argList.isEmpty) {
+                final bodyValue = interpret(sExpr.elements[2], env);
+                Global.bindings.insert(0, Binding(funName, bodyValue));
+                return VFunc(null, null);
+              }
               if (funDef.any((arg) => arg is! SBind)) {
                 return VError(
                     message:
@@ -269,16 +363,12 @@ Value interpret(SExprBase expr, Env env) {
                     source: expr.toString(),
                     type: 'SyntaxError');
               }
-              final closure =
-                  interpret(multipleArgLambda(argList.cast<SBind>(), sExpr.elements[2]), env);
-              (closure as VClos).value.env.binds
-                  .add(Binding((funDef.first as SBind).name, closure));
-              // FIXME: ATTENTION!
-              assert(closure != (closure as VClos).value.env.binds.first.value);
-              return closure;
-              // final namedClosure = NamedClosure(
-              //     (funDef.first as SBind).name, (closure as VClos).value);
-              // return VFunc(namedClosure);
+              final closure = interpret(
+                  multipleArgLambda(argList.cast<SBind>(), sExpr.elements[2]),
+                  env);
+              final vFunc =
+                  VFunc((funDef.first as SBind).name, (closure as VClos).value);
+              return vFunc;
             } else {
               return VError(
                   message:
@@ -328,11 +418,10 @@ Value interpret(SExprBase expr, Env env) {
             } else if (sExpr.length > 3) {
               final values =
                   sExpr.elements.sublist(1).map((expr) => interpret(expr, env));
+              if (values.any((v) => v is VError)) {
+                return values.whereType<VError>().first;
+              }
               return fold1(builtInBinaryOperatorMethods[sBind.name], values);
-              // return VError(
-              //     message: 'Not yet implemented',
-              //     source: expr.toString(),
-              //     type: 'NotYetImplementedError');
             } else {
               return curryingBinaryOperatorAppliedOne(
                   sBind.name, sExpr.elements[1], env);
@@ -370,18 +459,18 @@ Value interpret(SExprBase expr, Env env) {
         if (callerValue is VError) return callerValue;
         if (argValue is VError) return argValue;
 
-        if (callerValue is! VClos) {
+        if (callerValue is VClos || callerValue is VFunc) {
+          final closure = callerValue.value as Closure;
+          final bindName = closure.bindName;
+          final bindExpr = closure.bindExpr;
+          final bindEnv = closure.env;
+          return interpret(bindExpr, bindEnv.extended(bindName, argValue));
+        } else {
           return VError(
               message:
                   'Calling on uncallable expression ${sExpr.elements[0]} which evaluates to $callerValue',
               source: expr.toString(),
               type: 'TypeError');
-        } else {
-          final closure = (callerValue as VClos).value;
-          final bindName = closure.bindName;
-          final bindExpr = closure.bindExpr;
-          final bindEnv = closure.env;
-          return interpret(bindExpr, bindEnv.extended(bindName, argValue));
         }
       } // (SExpr ...)
       else {

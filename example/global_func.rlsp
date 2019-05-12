@@ -1,0 +1,18 @@
+; Reference a function later defined ;
+(def (f x) (g x))
+(def (g x) x)
+(f 1)
+(g 1)
+
+; factorial ;
+(def (fact x)
+  (if (= x 0) 1
+      (* x (fact (- x 1)))))
+(fact 6)
+
+; Bind a global function to a local name ;
+(let f (def (factorial x)
+  (if (= x 0) 1
+      (* x (factorial (- x 1)))))
+  (f 6))
+(factorial 5)

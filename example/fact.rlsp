@@ -1,3 +1,4 @@
+; Factorial implementation by Y-combinator ;
 (let y
   (\ gen
     ((\ g (g g)) (\ f (\ args ((gen (f f)) args)))))

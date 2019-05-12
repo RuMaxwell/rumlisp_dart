@@ -5,6 +5,7 @@ import 'package:args/args.dart';
 
 import 'package:rumlisp_dart/interpret.dart';
 import 'package:rumlisp_dart/parse.dart';
+import 'package:rumlisp_dart/typedefs.dart';
 
 void printHelp() {
   print('''Usage:
@@ -21,7 +22,7 @@ void tryExecute(ParseResult parseResult) {
     if (parseResult.isError) {
       print(parseResult);
     } else {
-      print(execute(parseResult.sExpr));
+      parseResult.sExprs.map(execute).forEach((v) => v is! VFunc ? print(v) : null);
     }
   }
 }

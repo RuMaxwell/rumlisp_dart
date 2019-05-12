@@ -34,10 +34,22 @@ Token tokenizer(SourcePosition sp) {
   if (sp.position >= sp.source.length) {
     return eofToken;
   }
+  if (sp.char == ';') {
+    // Comments
+    for (; sp.position < sp.source.length && sp.char != ';'; sp.position++) {}
+  }
   for (;
-      sp.position < sp.source.length && (sp.char.startsWith(RegExp(r'\s')));
-      sp.position++) {}
-  if (sp.position == sp.source.length) return eofToken;
+      sp.position < sp.source.length && (sp.char.startsWith(RegExp(r'[\s;]')));
+      sp.position++) {
+    if (sp.char == ';') {
+      // Comments
+      for (sp.position++;
+          sp.position < sp.source.length && sp.char != ';';
+          sp.position++) {}
+      sp.position++;
+    }
+  }
+  if (sp.position >= sp.source.length) return eofToken;
 
   if (sp.char == '(') {
     sp.position++;
@@ -67,20 +79,20 @@ class ParseResult {
   ParseResult.error(String message) {
     this._result = ParseError(message);
   }
-  ParseResult.sExpr(SExprBase sExpr) {
-    this._result = sExpr;
+  ParseResult.sExprs(List<SExprBase> sExprs) {
+    this._result = sExprs;
   }
 
   bool get isError => _result is ParseError;
 
-  SExprBase get sExpr => !isError ? _result as SExprBase : null;
+  List<SExprBase> get sExprs => !isError ? _result as List<SExprBase> : null;
 
   @override
   String toString() {
     if (isError) {
       return (_result as ParseError).toString();
     } else {
-      return (_result as SExprBase).toString();
+      return (_result as List<SExprBase>).toString();
     }
   }
 }
@@ -126,17 +138,18 @@ ParseResult parse(String source) {
 
   final exprStack = <SExprBase>[];
 
-  while (tokenStack.length > 0) {
+  while (tokenStack.isNotEmpty) {
     token = tokenStack.removeLast();
 
     if (token.type == TokenType.leftParen) {
       final elements = <SExprBase>[];
-      while (exprStack.length > 0) {
+      while (exprStack.isNotEmpty) {
         final item = exprStack.removeLast();
-        if (item == null)
+        if (item == null) {
           break;
-        else
+        } else {
           elements.add(item);
+        }
       }
       final expr = SExpr(elements);
       exprStack.add(expr);
@@ -152,9 +165,9 @@ ParseResult parse(String source) {
     }
   }
 
-  if (exprStack.length == 0) {
+  if (exprStack.isEmpty) {
     return ParseResult.error('Not yielding a result');
   } else {
-    return ParseResult.sExpr(exprStack.removeLast());
+    return ParseResult.sExprs(exprStack.reversed.toList());
   }
 }

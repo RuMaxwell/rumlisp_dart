@@ -11,23 +11,11 @@ class Closure {
         bind.value is VClos && (bind.value as VClos).value == this;
     if (env.binds.any(test)) {
       final _this = env.binds.where(test);
-      final _env =
-          Env(env.binds.where((b) => !test(b)).toList()).extended(_this.first.name, VString('<NamedThis>'));
+      final _env = Env(env.binds.where((b) => !test(b)).toList())
+          .extended(_this.first.name, VString('<NamedThis>'));
       return Closure(bindName, bindExpr, _env).toString();
     }
     return '(\\ ${bindName} . ${bindExpr}) where ${env}';
-  }
-}
-
-class NamedClosure {
-  final String name;
-  final Closure closure;
-
-  const NamedClosure(this.name, this.closure);
-
-  @override
-  String toString() {
-    return '<$name: $closure>';
   }
 }
 
@@ -68,11 +56,6 @@ class Env {
     return s;
   }
 
-  @override
-  String toString() {
-    return '[${_toString()}]';
-  }
-
   Env extended(String name, Value value) {
     return Env([Binding(name, value), ...binds]);
   }
@@ -80,10 +63,16 @@ class Env {
   Binding lookUp(String name) {
     return binds.firstWhere((bind) => bind.name == name, orElse: () => null);
   }
+
+  @override
+  String toString() {
+    return '[${_toString()}]';
+  }
 }
 
 abstract class Value {
   const Value();
+  dynamic get value;
 }
 
 class VNum extends Value {
@@ -172,17 +161,40 @@ class VClos extends Value {
 }
 
 class VFunc extends Value {
-  final NamedClosure value;
+  static final List<VFunc> functions = [];
+  static VFunc lookUp(String name) {
+    return functions.firstWhere((func) => func.name == name,
+        orElse: () => null);
+  }
 
-  const VFunc(this.value);
+  final String name;
+  final Closure value;
+
+  VFunc(this.name, this.value) {
+    functions.add(this);
+  }
 
   @override
   String toString() {
-    return value.toString();
+    return 'Fn{$name $value}';
+  }
+}
+
+// used for yielding VFunc result that it not important
+final VFunc nullFunc = VFunc(null, null);
+
+class Global {
+  static final List<VFunc> functions = VFunc.functions;
+  static final List<Binding> bindings = [];
+
+  static final lookUpFunction = VFunc.lookUp;
+  static Binding lookUpBinding(String name) {
+    return bindings.firstWhere((b) => b.name == name);
   }
 }
 
 class VError extends Value {
+  final VError value = null;
   final String message;
   final String source;
   final String type;
