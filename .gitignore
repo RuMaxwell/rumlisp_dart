@@ -6,6 +6,7 @@ pubspec.lock
 
 # Server related
 bin/server.dart
+bin/.cert/
 
 # vscode related
 .vscode/
