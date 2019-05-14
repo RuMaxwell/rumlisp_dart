@@ -163,8 +163,9 @@ class VClos extends Value {
 class VFunc extends Value {
   static final List<VFunc> functions = [];
   static VFunc lookUp(String name) {
-    return functions.firstWhere((func) => func.name == name,
-        orElse: () => null);
+    return functions.isEmpty
+        ? null
+        : functions.firstWhere((func) => func.name == name, orElse: () => null);
   }
 
   final String name;
@@ -189,7 +190,7 @@ class Global {
 
   static final lookUpFunction = VFunc.lookUp;
   static Binding lookUpBinding(String name) {
-    return bindings.firstWhere((b) => b.name == name);
+    return bindings.isEmpty ? null : bindings.firstWhere((b) => b.name == name);
   }
 }
 

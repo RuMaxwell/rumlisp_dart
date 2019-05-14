@@ -109,6 +109,8 @@ class ParseError {
 }
 
 ParseResult parse(String source) {
+  source = source ?? '';
+
   final tokenStack = <Token>[];
   final sourcePosition = SourcePosition(source, 0);
   var token = initToken;

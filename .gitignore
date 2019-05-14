@@ -4,6 +4,9 @@
 # Remove the following pattern if you wish to check in your lock file
 pubspec.lock
 
+# Server related
+bin/server.dart
+
 # vscode related
 .vscode/
 
