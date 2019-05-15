@@ -70,42 +70,51 @@ Future<void> main(List<String> args) async {
   argParser.addFlag('parse-only',
       negatable: false, defaultsTo: false);
   argParser.addOption('execute', abbr: 'e');
-  final argResult = argParser.parse(args);
-  final files = argResult.rest;
 
-  bool showHelp = argResult['help'];
-  bool parseOnly = argResult['parse-only'];
-  String code = argResult['execute'];
+  try {
+    final argResult = argParser.parse(args);
+    final files = argResult.rest;
 
-  if (showHelp) {
-    printHelp();
-    return;
-  }
+    bool showHelp = argResult['help'];
+    bool parseOnly = argResult['parse-only'];
+    String code = argResult['execute'];
 
-  var parsed;
-  if (code != null) {
-    parsed = parse(code);
-    if (parseOnly) {
-      print(parsed);
-    } else {
-      tryExecute(parsed);
+    if (showHelp) {
+      printHelp();
+      return;
     }
-  } else {
-    if (files.isEmpty) {
-      startRepl();
+
+    var parsed;
+    if (code != null) {
+      parsed = parse(code);
+      if (parseOnly) {
+        print(parsed);
+      } else {
+        tryExecute(parsed);
+      }
     } else {
-      for (final filename in files) {
-        final file = File(filename);
-        final content = await file.readAsString(encoding: utf8);
-        parsed = parse(content);
-        if (files.length > 1) print('FILE: $filename');
-        if (parseOnly) {
-          print(parsed);
-        } else {
-          tryExecute(parsed);
+      if (files.isEmpty) {
+        startRepl();
+      } else {
+        for (final filename in files) {
+          final file = File(filename);
+          final content = await file.readAsString(encoding: utf8);
+          parsed = parse(content);
+          if (files.length > 1) print('FILE: $filename');
+          if (parseOnly) {
+            print(parsed);
+          } else {
+            tryExecute(parsed);
+          }
+          print('');
         }
-        print('');
       }
     }
+  } on FormatException catch (e) {
+    final optionPattern = RegExp(r'Could not find an option or flag "(.*)"');
+    final option = optionPattern.stringMatch(e.toString());
+    final start = option.indexOf('"') + 1;
+    final end = option.indexOf('"', start);
+    print('Could not find an option or flag "${option.substring(start, end)}".');
   }
 }

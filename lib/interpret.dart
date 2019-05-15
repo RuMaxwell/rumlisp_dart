@@ -221,6 +221,11 @@ Value interpret(SExprBase expr, Env env) {
       return thing;
     }
   }
+  // SList
+  else if (expr is SList) {
+    final values = expr.elements.map((e) => interpret(e, env)).toList();
+    return VList(values);
+  }
   // (......)
   else {
     final sExpr = expr as SExpr;
@@ -406,6 +411,111 @@ Value interpret(SExprBase expr, Env env) {
             }
           }
         } // (if ......)
+        // (: <item> <list>) or (cons <item> <list>)
+        else if (sBind.name == ':' || sBind.name == 'cons') {
+          if (sExpr.length != 3) {
+            return VError(
+                message:
+                    'Syntax error in list construction (expected 3 items, got ${sExpr.length})',
+                source: expr.toString(),
+                type: 'SyntaxError');
+          } else {
+            final item = interpret(sExpr.elements[1], env);
+            if (item is VError) return item;
+            final list = interpret(sExpr.elements[2], env);
+            if (list is VError) return list;
+            else if (list is VList) {
+              list.cons(item);
+              return list;
+            } else {
+              return VError(
+                  message:
+                      'Expected a list at the third item of list construction, got ${sExpr.elements[2]} which evaluates to ${list}',
+                  source: expr.toString(),
+                  type: 'TypeError');
+            }
+          }
+        } // (: <item> <list>)
+        // (# <list>) or (len <list>)
+        else if (sBind.name == '#' || sBind.name == 'len') {
+          if (sExpr.length != 2) {
+            return VError(
+                message:
+                    'Syntax error in len (expected 2 items, got ${sExpr.length})',
+                source: expr.toString(),
+                type: 'SyntaxError');
+          } else {
+            final list = interpret(sExpr.elements[1], env);
+            if (list is VError) return list;
+            else if (list is VList) {
+              return VNum(list.length);
+            } else {
+              return VError(
+                  message:
+                      'Expected a list at len, got ${sExpr.elements[1]} which evaluates to ${list}',
+                  source: expr.toString(),
+                  type: 'TypeError');
+            }
+          }
+        } // (# <list>) or (len <list>)
+        // (. <list>) or (car <list>)
+        else if (sBind.name == '.' || sBind.name == 'car') {
+          if (sExpr.length != 2) {
+            return VError(
+                message:
+                    'Syntax error in car (expected 2 items, got ${sExpr.length})',
+                source: expr.toString(),
+                type: 'SyntaxError');
+          } else {
+            final list = interpret(sExpr.elements[1], env);
+            if (list is VError) return list;
+            else if (list is VList) {
+              if (list.length == 0) {
+                return VError(
+                    message:
+                        'Expected a non-empty list at car',
+                    source: expr.toString(),
+                    type: 'IndexError');
+              }
+              return list.car;
+            } else {
+              return VError(
+                  message:
+                      'Expected a list at car, got ${sExpr.elements[1]} which evaluates to ${list}',
+                  source: expr.toString(),
+                  type: 'TypeError');
+            }
+          }
+        } // (. <list>) or (car <list>)
+        // (.. <list>) or (cdr <list>)
+        else if (sBind.name == '..' || sBind.name == 'cdr') {
+          if (sExpr.length != 2) {
+            return VError(
+                message:
+                    'Syntax error in cdr (expected 2 items, got ${sExpr.length})',
+                source: expr.toString(),
+                type: 'SyntaxError');
+          } else {
+            final list = interpret(sExpr.elements[1], env);
+            if (list is VError) return list;
+            else if (list is VList) {
+              if (list.length == 0) {
+                return VError(
+                    message:
+                        'Expected a non-empty list at cdr',
+                    source: expr.toString(),
+                    type: 'IndexError');
+              }
+              return list.cdr;
+            } else {
+              return VError(
+                  message:
+                      'Expected a list at cdr, got ${sExpr.elements[1]} which evaluates to ${list}',
+                  source: expr.toString(),
+                  type: 'TypeError');
+            }
+          }
+        } // (. <list>) or (car <list>)
         // (op ......)
         else if (isOperator(sBind.name)) {
           if (builtInBinaryOperatorMethods.containsKey(sBind.name)) {

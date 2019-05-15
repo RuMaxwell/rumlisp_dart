@@ -1,0 +1,12 @@
+(def LIST [1 2 3])
+(len LIST)
+(car LIST)
+(cdr LIST)
+
+(def (map f s)
+  (if (= (# s) 0) []
+    (let x (. s)
+    (let xs (.. s)
+      (: (f x) (map f xs))))))
+
+(map (+ 1) [1 2 3])

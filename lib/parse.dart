@@ -1,6 +1,15 @@
 import 'typedefs.dart';
 
-enum TokenType { init, leftParen, rightParen, bind, number, eof }
+enum TokenType {
+  init,
+  leftParen,
+  rightParen,
+  leftBrac,
+  rightBrac,
+  bind,
+  number,
+  eof
+}
 
 class Token {
   final TokenType type;
@@ -18,6 +27,8 @@ const Token initToken = Token(TokenType.init, '');
 const Token eofToken = Token(TokenType.eof, '');
 const Token leftParenToken = Token(TokenType.leftParen, '');
 const Token rightParenToken = Token(TokenType.rightParen, '');
+const Token leftBracToken = Token(TokenType.leftBrac, '');
+const Token rightBracToken = Token(TokenType.rightBrac, '');
 
 class SourcePosition {
   final String source;
@@ -34,10 +45,6 @@ Token tokenizer(SourcePosition sp) {
   if (sp.position >= sp.source.length) {
     return eofToken;
   }
-  // if (sp.char == ';') {
-  //   // Comments
-  //   for (; sp.position < sp.source.length && sp.char != ';'; sp.position++) {}
-  // }
   for (;
       sp.position < sp.source.length && (sp.char.startsWith(RegExp(r'[\s;]')));
       sp.position++) {
@@ -57,9 +64,16 @@ Token tokenizer(SourcePosition sp) {
   } else if (sp.char == ')') {
     sp.position++;
     return rightParenToken;
+  } else if (sp.char == '[') {
+    sp.position++;
+    return leftBracToken;
+  } else if (sp.char == ']') {
+    sp.position++;
+    return rightBracToken;
   } else {
     final start = sp.position;
-    sp.position = sp.source.indexOf(RegExp(r'[\s()]'), start);
+    // Get the end of the token
+    sp.position = sp.source.indexOf(RegExp(r'[\s()\[\]]'), start);
     sp.position = sp.position == -1 ? sp.source.length : sp.position;
 
     final literal = sp.source.substring(start, sp.position);
@@ -114,25 +128,37 @@ ParseResult parse(String source) {
   final tokenStack = <Token>[];
   final sourcePosition = SourcePosition(source, 0);
   var token = initToken;
-  var parenthesesCount = 0;
+  // Store encountered parentheses (including ()s and []s)
+  var parenthesesStack = <String>[];
 
   while (token.type != TokenType.eof) {
     token = tokenizer(sourcePosition);
 
-    if (token.type == TokenType.leftParen)
-      parenthesesCount++;
-    else if (token.type == TokenType.rightParen) parenthesesCount--;
-
-    if (parenthesesCount < 0) {
-      return ParseResult.error(
-          'Parentheses unmatched: $parenthesesCount at ${sourcePosition.position}');
+    if (token.type == TokenType.leftParen) {
+      parenthesesStack.add('(');
+    } else if (token.type == TokenType.rightParen) {
+      if (parenthesesStack.isNotEmpty && parenthesesStack.last == '(') {
+        parenthesesStack.removeLast();
+      } else {
+        return ParseResult.error(
+          'Parentheses unmatched: ] at ${sourcePosition.position} (${parenthesesStack.isEmpty ? -1 : ''})');
+      }
+    } else if (token.type == TokenType.leftBrac) {
+      parenthesesStack.add('[');
+    } else if (token.type == TokenType.rightBrac) {
+      if (parenthesesStack.isNotEmpty && parenthesesStack.last == '[') {
+        parenthesesStack.removeLast();
+      } else {
+        return ParseResult.error(
+          'Parentheses unmatched: ] at ${sourcePosition.position} (${parenthesesStack.isEmpty ? -1 : ''})');
+      }
     }
 
     tokenStack.add(token);
   }
 
-  if (parenthesesCount > 0) {
-    return ParseResult.error('Parentheses unmatched: $parenthesesCount');
+  if (parenthesesStack.isNotEmpty) {
+    return ParseResult.error('Parentheses unmatched: lack of ${parenthesesStack.length} )s or ]s');
   }
 
   // Remove the last EOF token
@@ -147,7 +173,7 @@ ParseResult parse(String source) {
       final elements = <SExprBase>[];
       while (exprStack.isNotEmpty) {
         final item = exprStack.removeLast();
-        if (item == null) {
+        if (item == parenSignal) {
           break;
         } else {
           elements.add(item);
@@ -156,7 +182,21 @@ ParseResult parse(String source) {
       final expr = SExpr(elements);
       exprStack.add(expr);
     } else if (token.type == TokenType.rightParen) {
-      exprStack.add(null);
+      exprStack.add(parenSignal);
+    } else if (token.type == TokenType.leftBrac) {
+      final elements = <SExprBase>[];
+      while (exprStack.isNotEmpty) {
+        final item = exprStack.removeLast();
+        if (item == bracSignal) {
+          break;
+        } else {
+          elements.add(item);
+        }
+      }
+      final expr = SList(elements);
+      exprStack.add(expr);
+    } else if (token.type == TokenType.rightBrac) {
+      exprStack.add(bracSignal);
     } else if (token.type == TokenType.number) {
       final number = num.parse(token.literal);
       final sNum = SNum(number);

@@ -192,9 +192,44 @@ class Global {
   static Binding lookUpBinding(String name) {
     return bindings.isEmpty ? null : bindings.firstWhere((b) => b.name == name);
   }
+
   static void clear() {
     bindings.clear();
     functions.clear();
+  }
+}
+
+class VList extends Value {
+  final List<Value> value;
+
+  const VList(this.value);
+
+  int get length => value.length;
+
+  void cons(Value value) {
+    this.value.insert(0, value);
+  }
+
+  Value get car => value.first;
+
+  VList get cdr => VList(value.sublist(1));
+
+  String _toString() {
+    if (value.isEmpty) return '';
+
+    var s = '';
+    int i = 0;
+    for (; i < value.length - 1; i++) {
+      s += '${value[i]} ';
+    }
+    s += '${value[i]}';
+
+    return s;
+  }
+
+  @override
+  String toString() {
+    return '[${_toString()}]';
   }
 }
 
@@ -238,6 +273,30 @@ class SBind extends SExprBase {
   }
 }
 
+class SList extends SExprBase {
+  final List<SExprBase> elements;
+
+  const SList(this.elements);
+
+  int get length => elements.length;
+
+  String _toString() {
+    if (elements.isEmpty) return '';
+    var s = '';
+    var i = 0;
+    for (i = 0; i < elements.length - 1; i++) {
+      s += '${elements[i]} ';
+    }
+    s += '${elements[i]}';
+    return s;
+  }
+
+  @override
+  String toString() {
+    return '[${_toString()}]';
+  }
+}
+
 class SExpr extends SExprBase {
   final List<SExprBase> elements;
 
@@ -248,11 +307,11 @@ class SExpr extends SExprBase {
   String _toString() {
     if (elements.isEmpty) return '';
     var s = '';
-    for (var i = 0; i < elements.length - 1; i++) {
-      s += elements[i].toString();
-      s += ' ';
+    var i = 0;
+    for (i = 0; i < elements.length - 1; i++) {
+      s += '${elements[i]} ';
     }
-    s += elements[elements.length - 1].toString();
+    s += '${elements[i]}';
     return s;
   }
 
@@ -261,3 +320,11 @@ class SExpr extends SExprBase {
     return '(${_toString()})';
   }
 }
+
+// Temporary expression, used for parser to specify an expression's start or end.
+class SSignal extends SExprBase {
+  final String signal;
+  const SSignal(this.signal);
+}
+const parenSignal = SSignal(')');
+const bracSignal = SSignal(']');
