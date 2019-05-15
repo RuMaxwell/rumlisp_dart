@@ -1,8 +1,8 @@
 name: 'rumlisp_dart'
-description: A sample command-line application.
-# version: 1.0.0
-# homepage: https://www.example.com
-# author: RuMaxwell <935906960@qq.com>
+description: 'Dart implementation of rumlisp language.'
+version: 1.0.0
+homepage: https://github.com/RuMaxwell/rumlisp_dart
+author: RuMaxwell <935906960@qq.com>
 
 environment:
   sdk: '>=2.2.2 <3.0.0'
