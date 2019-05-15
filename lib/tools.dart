@@ -19,17 +19,20 @@ class CompileResult {
     if (hasParseError) {
       return 'Parse failed\r\n$parseResult';
     } else {
-      return value.join('\r\n');
+      return value.where((x) => x is! VFunc).join('\r\n');
     }
   }
 }
 
 CompileResult compileFromSource(String source) {
   final parseResult = parse(source);
+  var compileResult;
   if (parseResult.isError) {
-    return CompileResult(parseResult, null);
+    compileResult = CompileResult(parseResult, null);
   } else {
     final executeResult = parseResult.sExprs.map(execute).toList();
-    return CompileResult(parseResult, executeResult);
+    compileResult = CompileResult(parseResult, executeResult);
   }
+  Global.clear();
+  return compileResult;
 }

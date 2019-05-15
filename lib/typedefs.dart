@@ -192,6 +192,10 @@ class Global {
   static Binding lookUpBinding(String name) {
     return bindings.isEmpty ? null : bindings.firstWhere((b) => b.name == name);
   }
+  static void clear() {
+    bindings.clear();
+    functions.clear();
+  }
 }
 
 class VError extends Value {
