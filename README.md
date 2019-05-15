@@ -15,8 +15,9 @@ Now its main features are implemented and it is stable enough to be a formal ver
         [*] Int (64-bit), Float (64-bit ISO-IEEE Double)
         [ ] Integer (big int), Complex, Fraction (Exact real number)
     [*] Boolean type
-    [ ] Basic functional types
-        String [, Enum, Tuple], List [, Array], Map (Dictionary)
+    [+] Basic functional types
+        [*] List
+        [ ] String [, Enum, Tuple], Map (Dictionary)
     [*] Function type
         Functions as closures.
     [ ] User-defined data types

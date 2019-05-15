@@ -1,6 +1,6 @@
 name: 'rumlisp_dart'
 description: 'Dart implementation of rumlisp language.'
-version: 1.0.0
+version: 1.0.1
 homepage: https://github.com/RuMaxwell/rumlisp_dart
 author: RuMaxwell <935906960@qq.com>
 
