@@ -27,6 +27,43 @@ void tryExecute(ParseResult parseResult) {
   }
 }
 
+String prompt([String message = '>']) {
+  stdout.write(message);
+  return stdin.readLineSync();
+}
+
+void printReplHelp() {
+  print(''':help           Show this help message.
+:quit :q :exit  Exit the repl.''');
+}
+
+void startRepl() {
+  print('''rumlisp REPL version 1.0.0
+To see help, enter \':help\'''');
+  var program;
+  while (true) {
+    program = prompt('> ');
+    program = program.trim();
+    if (program[0] == ':') {
+      if (program == ':help') {
+        printReplHelp();
+        continue;
+      } else if (program == ':quit' || program == ':q' || program == ':exit') {
+        break;
+      }
+      printReplHelp();
+      continue;
+    }
+
+    final parseResult = parse(program);
+    if (parseResult.isError) {
+      print(parseResult);
+    } else {
+      tryExecute(parseResult);
+    }
+  }
+}
+
 Future<void> main(List<String> args) async {
   final argParser = ArgParser();
   argParser.addFlag('help', abbr: 'h', defaultsTo: false);
@@ -55,8 +92,7 @@ Future<void> main(List<String> args) async {
     }
   } else {
     if (files.isEmpty) {
-      print('REPL not implemented');
-      // TODO:
+      startRepl();
     } else {
       for (final filename in files) {
         final file = File(filename);

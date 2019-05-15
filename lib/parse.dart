@@ -34,10 +34,10 @@ Token tokenizer(SourcePosition sp) {
   if (sp.position >= sp.source.length) {
     return eofToken;
   }
-  if (sp.char == ';') {
-    // Comments
-    for (; sp.position < sp.source.length && sp.char != ';'; sp.position++) {}
-  }
+  // if (sp.char == ';') {
+  //   // Comments
+  //   for (; sp.position < sp.source.length && sp.char != ';'; sp.position++) {}
+  // }
   for (;
       sp.position < sp.source.length && (sp.char.startsWith(RegExp(r'[\s;]')));
       sp.position++) {
