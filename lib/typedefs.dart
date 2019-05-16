@@ -190,7 +190,9 @@ class Global {
 
   static final lookUpFunction = VFunc.lookUp;
   static Binding lookUpBinding(String name) {
-    return bindings.isEmpty ? null : bindings.firstWhere((b) => b.name == name);
+    return bindings.isEmpty
+        ? null
+        : bindings.firstWhere((b) => b.name == name, orElse: () => null);
   }
 
   static void clear() {
@@ -379,5 +381,6 @@ class SSignal extends SExprBase {
   final String signal;
   const SSignal(this.signal);
 }
+
 const parenSignal = SSignal(')');
 const bracSignal = SSignal(']');

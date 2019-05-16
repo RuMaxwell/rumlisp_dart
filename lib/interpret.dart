@@ -23,7 +23,7 @@ Binding curryingBinaryOperatorBinding(String op, Env env) {
           SExpr([
             SBind('\\'),
             SBind('____y'),
-            SExpr([SBind(op), SBind('____y'), SBind('____x')])
+            SExpr([SBind(op), SBind('____x'), SBind('____y')])
           ]),
           env)),
       false);
@@ -253,8 +253,29 @@ Value interpret(SExprBase expr, Env env) {
       // (SBind ......)
       else if (first is SBind) {
         final sBind = first;
+        // (error <message>)
+        if (sBind.name == 'error') {
+          if (sExpr.length != 2) {
+            return VError(
+                message:
+                    'Syntax error in error raising (expected 2 items, got ${sExpr.length})',
+                source: expr.toString(),
+                type: 'SyntaxError');
+          } else {
+            final message = interpret(sExpr.elements[1], env);
+            if (message is VError) {
+              return message;
+            } else {
+              return VError(
+                  message:
+                      'User raised error: $message',
+                  source: expr.toString(),
+                  type: 'CustomError');
+            }
+          }
+        } // (error <message>)
         // (let ......)
-        if (sBind.name == 'let') {
+        else if (sBind.name == 'let') {
           if (sExpr.length != 4) {
             return VError(
                 message:
