@@ -199,20 +199,21 @@ class Global {
   }
 }
 
-class VList extends Value {
+class _VList extends Value {
   final List<Value> value;
 
-  const VList(this.value);
+  const _VList(this.value);
 
   int get length => value.length;
 
-  void cons(Value value) {
+  _VList cons(Value value) {
     this.value.insert(0, value);
+    return this;
   }
 
   Value get car => value.first;
 
-  VList get cdr => VList(value.sublist(1));
+  _VList get cdr => _VList(value.sublist(1));
 
   String _toString() {
     if (value.isEmpty) return '';
@@ -225,6 +226,58 @@ class VList extends Value {
     s += '${value[i]}';
 
     return s;
+  }
+
+  @override
+  String toString() {
+    return '[${_toString()}]';
+  }
+}
+
+// Preferrable VList implementation.
+class VList extends Value {
+  VList _value;
+  VList get value => _value;
+
+  Value _car;
+  VList _cdr;
+  int _length;
+
+  VList.fromList(List<Value> list) {
+    _value = this;
+    if (list.isEmpty) {
+      _car = null;
+      _cdr = null;
+      _length = 0;
+    } else {
+      _car = list.first;
+      _cdr = VList.fromList(list.sublist(1));
+      _length = list.length;
+    }
+  }
+
+  VList.cons(this._car, this._cdr) {
+    _value = this;
+    _length = this._cdr == null ? 0 : this._cdr._length + 1;
+  }
+
+  Value get car => _car;
+  Value get cdr => _cdr;
+  int get length => _length;
+  bool get isEmpty => _length == 0;
+
+  VList cons(Value value) {
+    return VList.cons(value, this);
+  }
+
+  String _toString() {
+    if (isEmpty) {
+      return '';
+    } else if (_length == 1) {
+      return _car.toString();
+    } else {
+      return '${_car} ${_cdr._toString()}';
+    }
   }
 
   @override

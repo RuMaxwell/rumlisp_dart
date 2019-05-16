@@ -224,7 +224,7 @@ Value interpret(SExprBase expr, Env env) {
   // SList
   else if (expr is SList) {
     final values = expr.elements.map((e) => interpret(e, env)).toList();
-    return VList(values);
+    return VList.fromList(values);
   }
   // (......)
   else {
@@ -425,8 +425,7 @@ Value interpret(SExprBase expr, Env env) {
             final list = interpret(sExpr.elements[2], env);
             if (list is VError) return list;
             else if (list is VList) {
-              list.cons(item);
-              return list;
+              return list.cons(item);
             } else {
               return VError(
                   message:
